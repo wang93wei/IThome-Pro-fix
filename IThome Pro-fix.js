@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         IThome Pro fix
-// @version      4.7.1
+// @version      4.7.2
 // @description  优化ithome网页端浏览效果-修复版
 // @match        *://*.ithome.com/*
 // @run-at       document-start
@@ -308,6 +308,9 @@
 
     spacer.remove();
     window.scrollTo(0, 0);
+
+    // 隐藏评论加载后可能出现的登录提示
+    hideElements();
   }
 
   // 函数：首页卡片样式
