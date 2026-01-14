@@ -287,7 +287,7 @@
 
     scrollDebounceTimer = setTimeout(() => {
       autoClickLoadMore();
-    }, 200);
+    }, 500);
   });
 
   // 初始化时调用一次
@@ -501,9 +501,9 @@
           // 短暂延迟后重置标志位，确保DOM更新完成
           setTimeout(() => {
             isProcessing = false;
-          }, 100);
+          }, 200);
         }
-      }, 100);
+      }, 300);
     });
 
     observer.observe(document.body, { childList: true, subtree: true });
