@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         IThome Pro fix
-// @version      4.7
+// @version      4.7.1
 // @description  优化ithome网页端浏览效果-修复版
 // @match        *://*.ithome.com/*
 // @run-at       document-start
