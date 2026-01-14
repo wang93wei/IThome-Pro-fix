@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         IThome Pro fix
-// @version      4.7.2
+// @version      4.7.3
 // @description  优化ithome网页端浏览效果-修复版
 // @match        *://*.ithome.com/*
 // @run-at       document-start
@@ -15,9 +15,12 @@
   // 启用评论框：true：启用 false：关闭
   const showCommentBox = false;
 
-  // 定义样式-hideStyle：不透明度 0
+  // 定义样式-hideStyle：不透明度 0 + 隐藏登录提示
   const hideStyle = document.createElement("style");
-  hideStyle.innerHTML = `body { opacity: 0; }`;
+  hideStyle.innerHTML = `
+    body { opacity: 0; }
+    #rm-login-modal, #rm-login-modal *, #login-guide-box { display: none !important; }
+  `;
   document.head.appendChild(hideStyle);
 
   // 跳转到 blog 页面，加载完成前隐藏原始页面
