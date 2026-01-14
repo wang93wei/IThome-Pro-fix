@@ -1,5 +1,8 @@
 # IThome Pro Fix
 
+**版本**: 4.7  
+**修复日期**: 2026年1月14日
+
 基于 [IThome Pro](https://greasyfork.org/zh-CN/scripts/504286-ithome-pro) 脚本进行的修复版。
 
 ## 修复内容
