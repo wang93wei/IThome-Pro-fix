@@ -5,8 +5,8 @@
 // @match        *://*.ithome.com/*
 // @run-at       document-start
 // @namespace    https://github.com/wang93wei/IThome-Pro-fix
+// @supportURL   https://github.com/wang93wei/IThome-Pro-fix/issues
 // @license MIT
-
 // ==/UserScript==
 
 (function () {
