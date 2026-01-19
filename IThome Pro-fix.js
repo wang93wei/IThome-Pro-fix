@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         IThome Pro fix
-// @version      4.7.3
+// @version      4.8.0
 // @description  优化ithome网页端浏览效果-修复版
 // @match        *://*.ithome.com/*
 // @run-at       document-start
@@ -57,10 +57,12 @@
   // [调用] 保持页面激活
   keepPageActive();
 
-  // 函数：净化页面 利用 AdGuard 规则
-  function hideElements() {
-    const selectors = [
-      ...(!showCommentBox ? ["#postcomment3"] : []),
+  const processedImages = new WeakSet();
+  const processedElements = new WeakSet();
+  const originalStyles = new WeakMap();
+
+  const hideElements = () => {
+    const selectors = new Set([
       "#nav",
       "#top",
       "#tt",
@@ -89,18 +91,53 @@
       "#paragraph > p.ad-tips",
       '[id^="ad-id-"]',
       "div.-hongbao-container.bb:nth-child(6)",
-    ];
+    ]);
+
+    if (!showCommentBox) {
+      selectors.add("#postcomment3");
+    }
 
     selectors.forEach((selector) => {
       document.querySelectorAll(selector).forEach((element) => {
         element.style.display = "none";
       });
     });
-  }
+  };
 
-  // 函数：图片处理 - 圆角、边框
-  function processImage(image) {
-    // 这部分匹配到的图片不处理
+  const imageStyles = new Map([
+    ['home', {
+      border: "3px solid #CCC",
+      borderRadius: "12px",
+      display: "inline-block",
+      overflow: "hidden"
+    }],
+    ['video', {
+      border: "3px solid #CCC",
+      borderRadius: "12px",
+      overflow: "hidden",
+      maxWidth: "100%",
+      display: "block",
+      margin: "0 auto"
+    }],
+    ['longImage', {
+      borderRadius: "12px",
+      border: "3px solid #CCC",
+      width: "400px",
+      maxWidth: "400px",
+      height: "auto",
+      objectFit: "cover",
+      overflow: "hidden"
+    }],
+    ['regular', {
+      borderRadius: "12px",
+      border: "3px solid #CCC",
+      maxWidth: "450px"
+    }]
+  ]);
+
+  const processImage = (image) => {
+    if (processedImages.has(image)) return;
+    
     if (image.closest("#post_comm")) return;
     if (image.classList.contains("titleLogo")) return;
     if (image.classList.contains("lazy") && image.classList.contains("emoji"))
@@ -114,32 +151,22 @@
       return;
     if (image.classList.contains("comment-image")) return;
 
-    // 首页图片
     if (image.closest("a.img")) {
       const anchor = image.closest("a.img");
       if (!anchor.classList.contains("processed")) {
-        anchor.style.border = "3px solid #CCC";
-        anchor.style.borderRadius = "12px";
-        anchor.style.display = "inline-block";
-        anchor.style.overflow = "hidden";
+        Object.assign(anchor.style, imageStyles.get('home'));
         anchor.classList.add("processed");
+        processedImages.add(image);
       }
-      // 视频预览图
     } else if (image.closest(".ithome_super_player")) {
       const videoPlayer = image.closest(".ithome_super_player");
       if (!videoPlayer.parentNode.classList.contains("processed")) {
         const wrapper = document.createElement("div");
-        wrapper.style.border = "3px solid #CCC";
-        wrapper.style.borderRadius = "12px";
-        wrapper.style.overflow = "hidden";
-        wrapper.style.maxWidth = "100%";
-        wrapper.style.display = "block";
-        wrapper.style.margin = "0 auto";
+        Object.assign(wrapper.style, imageStyles.get('video'));
         wrapper.classList.add("processed");
         videoPlayer.parentNode.insertBefore(wrapper, videoPlayer);
         wrapper.appendChild(videoPlayer);
 
-        // 视频预览图根据父元素高度调整
         const img = videoPlayer.querySelector("img");
         if (img) {
           const imgWidth = img.getAttribute("w");
@@ -156,40 +183,50 @@
             img.style.height = `${imgHeight}px`;
           }
         }
+        processedImages.add(image);
       }
     } else {
-      // 超长图片宽度 450px
       if (image.height > 1000) {
-        image.style.borderRadius = "12px";
-        image.style.border = "3px solid #CCC";
-        image.style.width = "400px";
-        image.style.maxWidth = "400px";
-        image.style.height = "auto";
-        image.style.objectFit = "cover";
-        image.style.overflow = "hidden";
-        // 常规图片宽度 450px
+        Object.assign(image.style, imageStyles.get('longImage'));
       } else {
-        image.style.borderRadius = "12px";
-        image.style.border = "3px solid #CCC";
-        image.style.maxWidth = "450px";
+        Object.assign(image.style, imageStyles.get('regular'));
       }
+      processedImages.add(image);
     }
-  }
+  };
 
   // [调用] 图片处理
   function setRoundedImages() {
     document.querySelectorAll("img").forEach((image) => processImage(image));
   }
 
-  // 函数：头像处理
-  function styleHeaderImage() {
+  const styleConfig = new Map([
+    ['headerImage', {
+      borderRadius: "12px",
+      border: "3px solid #CCC"
+    }],
+    ['rounded', {
+      borderRadius: "12px"
+    }],
+    ['addComm', {
+      borderRadius: "0px 0px 12px 12px"
+    }],
+    ['card', {
+      borderRadius: "12px",
+      transform: "scale(0.8)"
+    }]
+  ]);
+
+  const styleHeaderImage = () => {
     const headerImages = document.querySelectorAll(".list .entry .headerimage");
 
     headerImages.forEach((image) => {
-      image.style.borderRadius = "12px";
-      image.style.border = "3px solid #CCC";
+      if (!processedImages.has(image)) {
+        Object.assign(image.style, styleConfig.get('headerImage'));
+        processedImages.add(image);
+      }
     });
-  }
+  };
 
   // 函数：多图连续排列时插入间隔
   function wrapImagesInP() {
@@ -220,41 +257,41 @@
     });
   }
 
-  // 函数：视频处理 - 圆角、边框
-  function processIframes() {
+  const processIframes = () => {
     const iframes = document.querySelectorAll(
       '.content .post_content iframe.ithome_video, .content .post_content iframe[src*="player.bilibili.com"]',
     );
 
     iframes.forEach((iframe) => {
-      if (!iframe.classList.contains("processed")) {
-        iframe.style.borderRadius = "12px";
-        iframe.style.border = "3px solid #CCC";
-        iframe.style.display = "block";
-        iframe.style.margin = "0 auto";
-        iframe.style.overflow = "hidden";
+      if (!processedElements.has(iframe) && !iframe.classList.contains("processed")) {
+        Object.assign(iframe.style, {
+          borderRadius: "12px",
+          border: "3px solid #CCC",
+          display: "block",
+          margin: "0 auto",
+          overflow: "hidden"
+        });
         iframe.classList.add("processed");
+        processedElements.add(iframe);
       }
     });
-  }
+  };
 
-  // 函数：页面样式圆角
-  function setRounded() {
+  const setRounded = () => {
     const roundeds = document.querySelectorAll(
       ".comm_list ul.list li.entry ul.reply, .content .post_content blockquote, " +
         ".add_comm input#btnComment, .card, span.card",
     );
-    roundeds.forEach((rounded) => (rounded.style.borderRadius = "12px"));
+    roundeds.forEach((rounded) => Object.assign(rounded.style, styleConfig.get('rounded')));
 
     document.querySelectorAll(".add_comm").forEach((addCommElement) => {
-      addCommElement.style.borderRadius = "0px 0px 12px 12px";
+      Object.assign(addCommElement.style, styleConfig.get('addComm'));
     });
 
     document.querySelectorAll(".card, span.card").forEach((card) => {
-      card.style.borderRadius = "12px";
-      card.style.transform = "scale(0.8)";
+      Object.assign(card.style, styleConfig.get('card'));
     });
-  }
+  };
 
   // 函数：移除首页信息流广告
   function removeAds() {
@@ -265,73 +302,83 @@
       });
   }
 
-  // 函数：自动点击「加载更多」按钮
-  let scrollDebounceTimer = null;
+  const debounce = (fn, delay = 500) => {
+    let timer = null;
+    return (...args) => {
+      clearTimeout(timer);
+      timer = setTimeout(() => fn(...args), delay);
+    };
+  };
 
-  function autoClickLoadMore() {
+  const autoClickLoadMore = async () => {
     const loadMoreButton = document.querySelector("a.more");
 
     if (!loadMoreButton) return;
 
-    // 检查按钮是否在视口中
     const rect = loadMoreButton.getBoundingClientRect();
     const isVisible = rect.top < window.innerHeight && rect.bottom > 0;
 
     if (isVisible) {
       loadMoreButton.click();
     }
-  }
+  };
 
-  // 添加滚动事件监听，带防抖
-  window.addEventListener("scroll", () => {
-    if (scrollDebounceTimer) {
-      clearTimeout(scrollDebounceTimer);
-    }
+  const debouncedAutoClickLoadMore = debounce(autoClickLoadMore, 500);
 
-    scrollDebounceTimer = setTimeout(() => {
-      autoClickLoadMore();
-    }, 500);
-  });
+  window.addEventListener("scroll", debouncedAutoClickLoadMore);
 
-  // 初始化时调用一次
-  setTimeout(() => {
-    autoClickLoadMore();
-  }, 1000);
+  (async () => {
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    await autoClickLoadMore();
+  })();
 
-  // 函数：评论加载
-  function forceLoadComments() {
+  const forceLoadComments = async () => {
     const footer = document.querySelector("#post_comm");
 
     const spacer = document.createElement("div");
-    spacer.style.height = "100vh";
-    spacer.style.visibility = "hidden";
+    Object.assign(spacer.style, {
+      height: "100vh",
+      visibility: "hidden"
+    });
     document.body.appendChild(spacer);
 
     window.scrollTo(0, document.body.scrollHeight);
 
+    await new Promise(resolve => setTimeout(resolve, 100));
+
     spacer.remove();
     window.scrollTo(0, 0);
 
-    // 隐藏评论加载后可能出现的登录提示
     hideElements();
-  }
+  };
 
-  // 函数：首页卡片样式
-  function initializePage() {
-    function makeListItemsClickable() {
+  const wrapperStyles = new Map([
+    ['hoverWrapper', {
+      position: "relative",
+      padding: "12px 16px",
+      borderRadius: "12px",
+      overflow: "hidden",
+      margin: "16px 0"
+    }],
+    ['hover', {
+      boxShadow: "0px 6px 15px rgba(0, 0, 0, 0.2)"
+    }],
+    ['normal', {
+      boxShadow: "none",
+      backgroundColor: "transparent"
+    }]
+  ]);
+
+  const initializePage = () => {
+    const makeListItemsClickable = () => {
       const listItems = document.querySelectorAll(".bl > li");
 
       listItems.forEach((li) => {
-        // 检查是否已经被处理过
         if (li.closest('.hover-wrapper')) return;
 
         const wrapper = document.createElement("div");
         wrapper.classList.add("hover-wrapper");
-        wrapper.style.position = "relative";
-        wrapper.style.padding = "12px 16px";
-        wrapper.style.borderRadius = "12px";
-        wrapper.style.overflow = "hidden";
-        wrapper.style.margin = "16px 0";
+        Object.assign(wrapper.style, wrapperStyles.get('hoverWrapper'));
 
         li.parentNode.insertBefore(wrapper, li);
         wrapper.appendChild(li);
@@ -344,30 +391,29 @@
 
           wrapper.style.cursor = "pointer";
           wrapper.addEventListener("click", () => {
-            window.open(titleLink.href, titleLink.target || "_self");
+            window.open(titleLink.href, titleLink.target ?? "_self");
           });
 
           wrapper.addEventListener("mouseover", () => {
-            wrapper.style.boxShadow = "0px 6px 15px rgba(0, 0, 0, 0.2)";
+            Object.assign(wrapper.style, wrapperStyles.get('hover'));
             wrapper.style.backgroundColor = getBackgroundColor();
           });
 
           wrapper.addEventListener("mouseout", () => {
-            wrapper.style.boxShadow = "none";
-            wrapper.style.backgroundColor = "transparent";
+            Object.assign(wrapper.style, wrapperStyles.get('normal'));
           });
         }
       });
-    }
+    };
 
-    function setHome() {
+    const setHome = () => {
       const divs = document.querySelectorAll("div.fl");
       divs.forEach((div) => {
         div.style.width = "870px";
       });
-    }
+    };
 
-    function removeMarginTop() {
+    const removeMarginTop = () => {
       const hoverWrappers = document.querySelectorAll(".hover-wrapper");
       hoverWrappers.forEach((hoverWrapper) => {
         const listItems = hoverWrapper.querySelectorAll("li");
@@ -375,16 +421,16 @@
           item.style.marginTop = "0";
         });
       });
-    }
+    };
 
-    function setDivWidthTo590() {
+    const setDivWidthTo590 = () => {
       const divs = document.querySelectorAll("div.c");
       divs.forEach((div) => {
         div.style.width = "640px";
       });
-    }
+    };
 
-    function getBackgroundColor() {
+    const getBackgroundColor = () => {
       if (
         window.matchMedia &&
         window.matchMedia("(prefers-color-scheme: dark)").matches
@@ -393,23 +439,22 @@
       } else {
         return "#f9f9f9";
       }
-    }
+    };
 
     makeListItemsClickable();
     setHome();
     removeMarginTop();
     setDivWidthTo590();
-  }
+  };
 
-  // 函数：评论区图片放大
-  function replaceImageWrapper() {
+  const replaceImageWrapper = () => {
     const imageWrappers = document.querySelectorAll(
       ".post-img-list a.img-wrapper",
     );
 
     imageWrappers.forEach((wrapper) => {
       const img = wrapper.querySelector("img");
-      if (img) {
+      if (img && !processedImages.has(img)) {
         const parent = wrapper.parentElement;
 
         wrapper.classList.remove("img-wrapper");
@@ -417,47 +462,56 @@
 
         wrapper.removeAttribute("href");
 
-        img.style.width = "30%";
-        img.style.height = "auto";
-        img.style.borderRadius = "12px";
-        img.style.border = "3px solid #CCC";
+        const originalWidth = img.style.width;
+        const originalHeight = img.style.height;
+        originalStyles.set(img, { width: originalWidth, height: originalHeight });
+
+        Object.assign(img.style, {
+          width: "30%",
+          height: "auto",
+          borderRadius: "12px",
+          border: "3px solid #CCC"
+        });
 
         let isZoomed = false;
 
         img.addEventListener("click", () => {
           if (isZoomed) {
-            img.style.width = "30%";
+            const original = originalStyles.get(img);
+            Object.assign(img.style, {
+              width: original?.width || "30%",
+              height: original?.height || "auto"
+            });
           } else {
             img.style.width = "100%";
           }
           img.style.height = "auto";
           isZoomed = !isZoomed;
         });
+
+        processedImages.add(img);
       }
     });
-  }
+  };
 
-  // 函数：观察DOM变化，处理新刷出的内容
-  function observeDOM() {
+  const observeDOM = () => {
     let isProcessing = false;
     let debounceTimer = null;
 
     const observer = new MutationObserver((mutationsList) => {
-      // 防止循环触发
       if (isProcessing) return;
 
-      // 防抖处理，避免频繁触发
       clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(() => {
+      debounceTimer = setTimeout(async () => {
         isProcessing = true;
 
         try {
+          const mutationPromises = [];
+
           for (const mutation of mutationsList) {
             if (mutation.type === "childList" && mutation.addedNodes.length > 0) {
-              // 只处理新添加的节点
               const hasNewContent = Array.from(mutation.addedNodes).some(node => {
                 if (node.nodeType === Node.ELEMENT_NODE) {
-                  // 检查是否包含有意义的内容，而不是我们自己的包装元素
                   return !node.classList.contains('hover-wrapper') &&
                          !node.classList.contains('processed') &&
                          (node.querySelector && (
@@ -470,16 +524,19 @@
               });
 
               if (hasNewContent) {
-                wrapImagesInP();
-                setRounded();
-                removeAds();
-                hideElements();
-                setRoundedImages();
-                styleHeaderImage();
-                initializePage();
-                replaceImageWrapper();
+                mutationPromises.push(
+                  Promise.all([
+                    Promise.resolve(wrapImagesInP()),
+                    Promise.resolve(setRounded()),
+                    Promise.resolve(removeAds()),
+                    Promise.resolve(hideElements()),
+                    Promise.resolve(setRoundedImages()),
+                    Promise.resolve(styleHeaderImage()),
+                    Promise.resolve(initializePage()),
+                    Promise.resolve(replaceImageWrapper())
+                  ])
+                );
 
-                // 处理图片懒加载
                 mutation.addedNodes.forEach(node => {
                   if (node.nodeType === Node.ELEMENT_NODE) {
                     const images = node.querySelectorAll ? node.querySelectorAll('img') : [];
@@ -503,8 +560,9 @@
               }
             }
           }
+
+          await Promise.all(mutationPromises);
         } finally {
-          // 短暂延迟后重置标志位，确保DOM更新完成
           setTimeout(() => {
             isProcessing = false;
           }, 200);
@@ -513,24 +571,25 @@
     });
 
     observer.observe(document.body, { childList: true, subtree: true });
-  }
+  };
 
-  // 监听事件
-  window.addEventListener("load", function () {
-    hideElements();
-    forceLoadComments();
-    removeAds();
-    wrapImagesInP();
-    setRounded();
-    processIframes();
-    setRoundedImages();
-    styleHeaderImage();
-    initializePage();
-    replaceImageWrapper();
-    observeDOM();
+  window.addEventListener("load", async () => {
+    await Promise.all([
+      Promise.resolve(hideElements()),
+      Promise.resolve(forceLoadComments()),
+      Promise.resolve(removeAds()),
+      Promise.resolve(wrapImagesInP()),
+      Promise.resolve(setRounded()),
+      Promise.resolve(processIframes()),
+      Promise.resolve(setRoundedImages()),
+      Promise.resolve(styleHeaderImage()),
+      Promise.resolve(initializePage()),
+      Promise.resolve(replaceImageWrapper()),
+      Promise.resolve(observeDOM())
+    ]);
+
     document.body.style.opacity = "1";
 
-    // 处理图片懒加载
     document.querySelectorAll("img").forEach((img) => {
       if (img.hasAttribute("loading")) {
         img.removeAttribute("loading");
