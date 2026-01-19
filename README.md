@@ -12,15 +12,23 @@
 ## 更新日志
 
 ### v4.8.0 (2026-01-20)
-- 重构代码，使用现代JavaScript特性优化性能和可维护性
-  - 使用 async/await 优化异步操作，提升代码可读性
-  - 使用 Map 和 Set 替代对象和数组，提高数据管理效率
-  - 使用 Promise.all 并行处理异步操作，提升执行效率
-  - 使用 WeakMap 和 WeakSet 管理弱引用，避免内存泄漏
-  - 封装可复用的 debounce 高阶函数
-  - 统一使用 Object.assign 批量应用样式
-  - 使用空值合并运算符 (??) 替代逻辑或运算符 (||)
-  - 使用箭头函数和 const/let 替代传统函数和 var
+- 代码重构与优化，提升代码质量、性能和可维护性
+  - 添加完整的JSDoc注释和行内注释，提升代码可读性
+  - 修复重复添加style元素的bug，避免DOM污染
+  - 优化MutationObserver处理逻辑，移除不必要的Promise包装
+  - 为所有关键函数添加错误处理（try-catch），提升稳定性
+  - 提取重复的图片加载代码为独立函数forceLoadImage
+  - 定义CONFIG对象替换所有魔法数字，提升可配置性
+  - 重构initializePage函数结构，提取子函数到模块级别
+  - 优化选择器查询效率，合并部分选择器减少查询次数
+  - 添加配置选项（showCommentBox、autoLoadMore、autoLoadImages等）
+  - 将WeakSet/WeakMap改为Set/Map，避免元素被垃圾回收导致重复处理
+  - 使用async/await优化异步操作
+  - 使用Map和Set替代对象和数组
+  - 封装可复用的debounce高阶函数
+  - 统一使用Object.assign批量应用样式
+  - 使用空值合并运算符(??)替代逻辑或运算符(||)
+  - 使用箭头函数和const/let替代传统函数和var
 
 ### v4.7.3 (2026-01-14)
 - 修复登录提示闪烁问题
