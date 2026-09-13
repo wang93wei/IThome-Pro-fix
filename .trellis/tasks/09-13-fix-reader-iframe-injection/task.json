@@ -1,0 +1,28 @@
+{
+  "id": "fix-reader-iframe-injection",
+  "name": "fix-reader-iframe-injection",
+  "title": "修复页内阅读器 iframe 脚本不注入（去 sandbox 改 CSP 防跳转）",
+  "description": "",
+  "status": "in_progress",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P2",
+  "creator": "alan",
+  "assignee": "alan",
+  "createdAt": "2026-09-13",
+  "completedAt": null,
+  "branch": null,
+  "base_branch": "main",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {
+    "title": "修复页内阅读器内脚本不生效（保留 sandbox + 父帧注入）"
+  }
+}

@@ -1,0 +1,2 @@
+{"file": ".trellis/spec/userscript/dynamic-content.md", "reason": "启动时序/window.load 主序列/MutationObserver 约束，改造 openInPageReader 与其 load 回调前必读"}
+{"file": ".trellis/spec/userscript/config-and-features.md", "reason": "CONFIG.inPageReader 开关语义，确认新增清理函数不破坏配置纪律"}

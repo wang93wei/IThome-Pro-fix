@@ -1,0 +1,1 @@
+{"file": ".trellis/spec/userscript/dynamic-content.md", "reason": "验证注入通道与帧内清理不干扰顶层 MutationObserver 与自动加载更多"}
