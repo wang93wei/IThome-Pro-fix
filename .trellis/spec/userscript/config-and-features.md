@@ -1,6 +1,6 @@
 # 配置与功能开关
 
-> `CONFIG` 是唯一的用户可调入口（`IThome Pro-fix.js:19-55`）。改动它之前先读"开关生效现状"，别按字段名望文生义。
+> `CONFIG` 是唯一的用户可调入口（`IThome Pro-fix.js:19-58`）。改动它之前先读"开关生效现状"，别按字段名望文生义。
 
 ---
 
@@ -15,6 +15,7 @@
 | `autoLoadImages` | 开关 | `true` | `window.load` 尾部决定是否全量 `forceLoadImage` |
 | `roundedImages` | 开关 | `true` | **未被任何调用方检查**（见下） |
 | `hideAds` | 开关 | `true` | **未被任何调用方检查**（见下） |
+| `inPageReader` | 开关 | `true` | `true` 时列表项点击走 `openInPageReader` 页内浮层，`false` 回退原 `window.open` 跳转 |
 | `MOUSEMOVE_INTERVAL` | 时序 | 100 | `keepPageActive` 的 mousemove 触发间隔 |
 | `MOUSEMOVE_DURATION` | 时序 | 5000 | `keepPageActive` 停止时间 |
 | `INITIAL_DELAY` | 时序 | 1000 | 初始自动加载前的等待 |
@@ -25,7 +26,7 @@
 
 ## 开关生效现状（截至 v4.8.0，如实记录）
 
-- 真正被 honored 的：`showCommentBox`（`IThome Pro-fix.js:195`）、`autoLoadMore`（`:533`）、`autoLoadImages`（`:925`）。
+- 真正被 honored 的：`showCommentBox`（`IThome Pro-fix.js:198`）、`autoLoadMore`（`:536`）、`inPageReader`（`:872`）、`autoLoadImages`（`:1134`）。
 - **未接线的历史欠账**：`hideAds` 与 `roundedImages` 存在于 `CONFIG`，但 `hideElements` / `removeAds` / `setRoundedImages` 无条件执行。规范要求：
   1. 新增开关时，接线检查点和开关一起提交，并在本文件登记；
   2. 顺手修复这两个旧开关是合法的独立任务，但不要在无关改动里"顺便"改变它们的行为。

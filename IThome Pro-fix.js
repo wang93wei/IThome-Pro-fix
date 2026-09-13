@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         IThome Pro fix
-// @version      4.8.0
+// @version      4.9.0
 // @description  优化ithome网页端浏览效果-修复版
 // @match        *://*.ithome.com/*
 // @run-at       document-start
@@ -31,6 +31,9 @@
     
     // 是否隐藏广告（true：隐藏，false：显示）
     hideAds: true,
+
+    // 是否在页面内阅读新闻（true：浮层内嵌阅读，false：跳转/新标签页打开）
+    inPageReader: true,
     
     // 鼠标移动事件触发间隔（毫秒）
     MOUSEMOVE_INTERVAL: 100,
@@ -634,8 +637,209 @@
   };
 
   /**
+   * 阅读器样式配置
+   * 定义页内新闻阅读器浮层的各部分样式
+   */
+  const readerStyles = new Map([
+    // 全屏遮罩层
+    ['overlay', {
+      position: "fixed",
+      top: "0",
+      left: "0",
+      width: "100vw",
+      height: "100vh",
+      backgroundColor: "rgba(0, 0, 0, 0.5)",
+      zIndex: "2147483647",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center"
+    }],
+    // 阅读面板
+    ['panel', {
+      width: "min(1100px, 94vw)",
+      height: "92vh",
+      display: "flex",
+      flexDirection: "column",
+      borderRadius: "12px",
+      overflow: "hidden",
+      boxShadow: "0 12px 40px rgba(0, 0, 0, 0.4)"
+    }],
+    // 顶部栏
+    ['header', {
+      display: "flex",
+      alignItems: "center",
+      gap: "12px",
+      padding: "10px 16px",
+      flexShrink: "0",
+      borderBottom: "1px solid rgba(128, 128, 128, 0.3)"
+    }],
+    // 标题文本
+    ['title', {
+      flex: "1",
+      minWidth: "0",
+      overflow: "hidden",
+      textOverflow: "ellipsis",
+      whiteSpace: "nowrap",
+      fontSize: "16px",
+      fontWeight: "bold"
+    }],
+    // 顶部栏操作按钮/链接
+    ['action', {
+      flexShrink: "0",
+      padding: "4px 10px",
+      borderRadius: "6px",
+      fontSize: "14px",
+      cursor: "pointer",
+      textDecoration: "none",
+      border: "1px solid rgba(128, 128, 128, 0.4)",
+      background: "transparent",
+      color: "inherit"
+    }],
+    // 正文iframe
+    ['frame', {
+      flex: "1",
+      width: "100%",
+      border: "0"
+    }]
+  ]);
+
+  // 打开阅读器前的页面滚动位置
+  let readerScrollY = 0;
+
+  /**
+   * 处理阅读器的ESC按键
+   * @param {KeyboardEvent} event - 键盘事件
+   */
+  const handleReaderKeydown = (event) => {
+    if (event.key === "Escape") {
+      closeInPageReader();
+    }
+  };
+
+  /**
+   * 关闭页内阅读器
+   * 移除浮层、解绑键盘监听并恢复列表页滚动
+   */
+  const closeInPageReader = () => {
+    try {
+      const overlay = document.getElementById("ithome-inpage-reader");
+      if (!overlay) return;
+
+      overlay.remove();
+      document.removeEventListener("keydown", handleReaderKeydown);
+
+      // 恢复页面滚动
+      document.body.style.overflow = "";
+      window.scrollTo(0, readerScrollY);
+    } catch (error) {
+      console.error("Error in closeInPageReader:", error);
+    }
+  };
+
+  /**
+   * 打开页内阅读器
+   * 以全屏浮层 + iframe 的方式在当前页面内阅读文章，浮层为单例可复用
+   * @param {string} url - 文章链接
+   * @param {string} title - 文章标题
+   */
+  const openInPageReader = (url, title) => {
+    try {
+      // 浮层已存在时仅切换内容
+      const existing = document.getElementById("ithome-inpage-reader");
+      if (existing) {
+        const oldFrame = existing.querySelector("iframe");
+        const oldTitle = existing.querySelector(".ithome-reader-title");
+        const oldLink = existing.querySelector(".ithome-reader-open");
+        if (oldFrame) oldFrame.src = url;
+        if (oldTitle) oldTitle.textContent = title;
+        if (oldLink) oldLink.href = url;
+        return;
+      }
+
+      // 记录滚动位置并锁定背景页面滚动
+      readerScrollY = window.scrollY;
+      document.body.style.overflow = "hidden";
+
+      // 遮罩层
+      const overlay = document.createElement("div");
+      overlay.id = "ithome-inpage-reader";
+      overlay.classList.add("ithome-inpage-reader");
+      Object.assign(overlay.style, readerStyles.get('overlay'));
+
+      // 点击遮罩空白处关闭
+      overlay.addEventListener("click", (event) => {
+        if (event.target === overlay) closeInPageReader();
+      });
+
+      // 阅读面板（背景色随系统深浅色模式适配）
+      const panel = document.createElement("div");
+      Object.assign(panel.style, readerStyles.get('panel'));
+      const backgroundColor = getBackgroundColor();
+      panel.style.backgroundColor = backgroundColor;
+      panel.style.color = backgroundColor === "#333333" ? "#eeeeee" : "#222222";
+
+      // 顶部栏：标题 + 新标签打开 + 关闭按钮
+      const header = document.createElement("div");
+      Object.assign(header.style, readerStyles.get('header'));
+
+      const titleEl = document.createElement("span");
+      titleEl.classList.add("ithome-reader-title");
+      Object.assign(titleEl.style, readerStyles.get('title'));
+      titleEl.textContent = title;
+
+      const openLink = document.createElement("a");
+      openLink.classList.add("ithome-reader-open");
+      openLink.href = url;
+      openLink.target = "_blank";
+      openLink.rel = "noopener";
+      openLink.textContent = "新标签打开";
+      Object.assign(openLink.style, readerStyles.get('action'));
+
+      const closeBtn = document.createElement("button");
+      closeBtn.type = "button";
+      closeBtn.textContent = "✕";
+      Object.assign(closeBtn.style, readerStyles.get('action'));
+      closeBtn.addEventListener("click", closeInPageReader);
+
+      header.appendChild(titleEl);
+      header.appendChild(openLink);
+      header.appendChild(closeBtn);
+
+      // 正文iframe：与列表同源，本脚本会在其中继续生效
+      const frame = document.createElement("iframe");
+      // 站点脚本（ua.min.js）含防嵌套跳转（self!=top时改写top.location），
+      // sandbox下该跳转被浏览器拦截；allow-same-origin保证登录弹窗等
+      // 依赖storage的站点功能正常，且本脚本在iframe内继续生效
+      frame.sandbox = "allow-scripts allow-same-origin allow-forms allow-popups";
+      frame.src = url;
+      frame.setAttribute("frameborder", "0");
+      Object.assign(frame.style, readerStyles.get('frame'));
+
+      // iframe获得焦点后ESC事件发生在其内部文档；sandbox下contentDocument不可访问，
+      // 此时依赖关闭按钮/遮罩，同源可达时补充绑定ESC
+      frame.addEventListener("load", () => {
+        try {
+          frame.contentDocument?.addEventListener("keydown", handleReaderKeydown);
+        } catch (error) {
+          console.error("Error in reader iframe keydown binding:", error);
+        }
+      });
+
+      panel.appendChild(header);
+      panel.appendChild(frame);
+      overlay.appendChild(panel);
+      document.body.appendChild(overlay);
+
+      // ESC关闭
+      document.addEventListener("keydown", handleReaderKeydown);
+    } catch (error) {
+      console.error("Error in openInPageReader:", error);
+    }
+  };
+
+  /**
    * 使列表项可点击
-   * 将列表项包装在div中，点击整个区域可以跳转到文章
+   * 将列表项包装在div中，点击整个区域可以在页内阅读器中打开文章
    */
   const makeListItemsClickable = () => {
     try {
@@ -665,7 +869,11 @@
           // 设置包装器为可点击
           wrapper.style.cursor = "pointer";
           wrapper.addEventListener("click", () => {
-            window.open(titleLink.href, titleLink.target ?? "_self");
+            if (CONFIG.inPageReader) {
+              openInPageReader(titleLink.href, titleLink.textContent);
+            } else {
+              window.open(titleLink.href, titleLink.target ?? "_self");
+            }
           });
 
           // 鼠标悬停效果
@@ -859,6 +1067,7 @@
                 if (node.nodeType === Node.ELEMENT_NODE) {
                   return !node.classList.contains('hover-wrapper') &&
                          !node.classList.contains('processed') &&
+                         !node.classList.contains('ithome-inpage-reader') &&
                          (node.querySelector && (
                            node.querySelector('.bl > li') ||
                            node.querySelector('img') ||
