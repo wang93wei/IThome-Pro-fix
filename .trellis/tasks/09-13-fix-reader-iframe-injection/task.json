@@ -21,7 +21,7 @@
   "children": [],
   "parent": null,
   "relatedFiles": [],
-  "notes": "",
+  "notes": "2026-09-16 用户决定关闭：不实施代码改动。已完成规划（prd/design/implement）与浏览器实验验证（T1-T8），结论保留在 prd.md 与 design.md；如日后要修，按 design.md 方案 D（保留 sandbox + 父帧注入）继续。",
   "meta": {
     "title": "修复页内阅读器内脚本不生效（保留 sandbox + 父帧注入）"
   }
