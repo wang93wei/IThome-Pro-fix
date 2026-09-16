@@ -223,7 +223,7 @@ def _restore_child_links(unlinked: dict[Path, str | None]) -> None:
         print(
             colored(
                 f"Warning: could not restore the parent link on: {', '.join(broken)}. "
-                "Re-link each one with `python .trellis/scripts/task.py "
+                "Re-link each one with `python3 .trellis/scripts/task.py "
                 "add-subtask <parent> <child>`.",
                 Colors.RED,
             ),
@@ -729,7 +729,7 @@ def cmd_create(args: argparse.Namespace) -> int:
             file=sys.stderr,
         )
         print(
-            "      list available specs: python .trellis/scripts/get_context.py --mode packages",
+            "      list available specs: python3 .trellis/scripts/get_context.py --mode packages",
             file=sys.stderr,
         )
     print("  - Use /trellis:continue or phase context to decide the next step", file=sys.stderr)
@@ -1228,7 +1228,7 @@ def _validate_branch_metadata(
     """
     branch = _task_branch_field(data, "branch")
     base_branch = _task_branch_field(data, "base_branch")
-    task_py = f"python {DIR_WORKFLOW}/scripts/task.py"
+    task_py = f"python3 {DIR_WORKFLOW}/scripts/task.py"
 
     if branch and not branch_exists_locally(branch, repo_root):
         print(
@@ -1798,7 +1798,7 @@ def cmd_set_branch(args: argparse.Namespace) -> int:
 
     if not branch:
         print(colored("Error: Missing arguments", Colors.RED))
-        print("Usage: python task.py set-branch <task-dir> <branch-name>")
+        print("Usage: python3 task.py set-branch <task-dir> <branch-name>")
         return 1
 
     if not target_dir:
@@ -1840,8 +1840,8 @@ def cmd_set_base_branch(args: argparse.Namespace) -> int:
 
     if not base_branch:
         print(colored("Error: Missing arguments", Colors.RED))
-        print("Usage: python task.py set-base-branch <task-dir> <base-branch>")
-        print("Example: python task.py set-base-branch <dir> develop")
+        print("Usage: python3 task.py set-base-branch <task-dir> <base-branch>")
+        print("Example: python3 task.py set-base-branch <dir> develop")
         print()
         print("This sets the target branch for PR (the branch your feature will merge into).")
         return 1
@@ -1886,7 +1886,7 @@ def cmd_set_scope(args: argparse.Namespace) -> int:
 
     if not scope:
         print(colored("Error: Missing arguments", Colors.RED))
-        print("Usage: python task.py set-scope <task-dir> <scope>")
+        print("Usage: python3 task.py set-scope <task-dir> <scope>")
         return 1
 
     if not target_dir:
@@ -1929,7 +1929,7 @@ def cmd_set_meta(args: argparse.Namespace) -> int:
 
     if not key:
         print(colored("Error: Missing arguments", Colors.RED))
-        print("Usage: python task.py set-meta <task-dir> <key> <value>")
+        print("Usage: python3 task.py set-meta <task-dir> <key> <value>")
         return 1
 
     if not target_dir:

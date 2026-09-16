@@ -4,20 +4,20 @@
 Add a new session to journal file and update index.md.
 
 Usage:
-    python add_session.py --title "Title" --commit "hash" --summary "Summary" [--package cli]
-    python add_session.py --title "Title" --branch "feat/my-branch"
+    python3 add_session.py --title "Title" --commit "hash" --summary "Summary" [--package cli]
+    python3 add_session.py --title "Title" --branch "feat/my-branch"
 
     # Pipe detailed content via stdin (use --stdin to opt in):
-    cat << 'EOF' | python add_session.py --stdin --title "Title" --summary "Summary"
+    cat << 'EOF' | python3 add_session.py --stdin --title "Title" --summary "Summary"
     <session content here>
     EOF
 
     # Structured content (repeatable; a section with no bullets is omitted):
-    python add_session.py --title "Title" --change "Did X" --test "Ran Y" --next-step "Do Z"
+    python3 add_session.py --title "Title" --change "Did X" --test "Ran Y" --next-step "Do Z"
 
     # Commit evidence that cannot be resolved from the local object database
     # (amended, not yet fetched) needs an explicit subject, one per OID:
-    python add_session.py --title "Title" --commit "abc1234" \
+    python3 add_session.py --title "Title" --commit "abc1234" \
         --commit-subject "abc1234=fix(cli): stop truncating the manifest"
 
 Commit evidence:

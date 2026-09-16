@@ -394,7 +394,7 @@ def _validate_jsonl(jsonl_file: Path, repo_root: Path, task_dir: Path | None = N
             f"  {colored(f'{file_name}: ✗ (0 curated entries — sub-agents would get zero spec context)', Colors.RED)}"
         )
         print(
-            f"    Curate it:  python .trellis/scripts/task.py add-context <task> {action} <path> \"<why>\""
+            f"    Curate it:  python3 .trellis/scripts/task.py add-context <task> {action} <path> \"<why>\""
         )
         print(
             "    Intentionally empty? Bypass at start: task.py start <task> --allow-empty-context"

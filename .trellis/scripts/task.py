@@ -4,24 +4,24 @@
 Task Management Script.
 
 Usage:
-    python task.py create "<title>" --description "<desc>" [--slug <name>] [--assignee <dev>] [--priority P0|P1|P2|P3] [--parent <dir>] [--package <pkg>] [--no-start] [--force]
-    python task.py add-context <dir> <file> <path> [reason] # Add jsonl entry
-    python task.py validate <dir>              # Validate jsonl files
-    python task.py list-context <dir>          # List jsonl entries
-    python task.py start <dir>                 # Set active task, record current branch
-    python task.py current [--source] [--json] # Show active task
-    python task.py finish                      # Clear active task
-    python task.py workflow <id>|--clear       # Set/clear per-task workflow selection
-    python task.py set-branch <dir> <branch>   # Set git branch
-    python task.py set-base-branch <dir> <branch>  # Set PR target branch
-    python task.py set-scope <dir> <scope>     # Set scope for PR title
-    python task.py set-meta <dir> <key> <value>  # Set a task metadata key
-    python task.py rename <dir> <new-slug> [--dry-run]  # Rename task + references
-    python task.py archive <task-dir> [--skip-branch-validation]  # Archive completed task
-    python task.py list                        # List active tasks
-    python task.py list-archive [month]        # List archived tasks
-    python task.py add-subtask <parent-dir> <child-dir>     # Link child to parent
-    python task.py remove-subtask <parent-dir> <child-dir>  # Unlink child from parent
+    python3 task.py create "<title>" --description "<desc>" [--slug <name>] [--assignee <dev>] [--priority P0|P1|P2|P3] [--parent <dir>] [--package <pkg>] [--no-start] [--force]
+    python3 task.py add-context <dir> <file> <path> [reason] # Add jsonl entry
+    python3 task.py validate <dir>              # Validate jsonl files
+    python3 task.py list-context <dir>          # List jsonl entries
+    python3 task.py start <dir>                 # Set active task, record current branch
+    python3 task.py current [--source] [--json] # Show active task
+    python3 task.py finish                      # Clear active task
+    python3 task.py workflow <id>|--clear       # Set/clear per-task workflow selection
+    python3 task.py set-branch <dir> <branch>   # Set git branch
+    python3 task.py set-base-branch <dir> <branch>  # Set PR target branch
+    python3 task.py set-scope <dir> <scope>     # Set scope for PR title
+    python3 task.py set-meta <dir> <key> <value>  # Set a task metadata key
+    python3 task.py rename <dir> <new-slug> [--dry-run]  # Rename task + references
+    python3 task.py archive <task-dir> [--skip-branch-validation]  # Archive completed task
+    python3 task.py list                        # List active tasks
+    python3 task.py list-archive [month]        # List archived tasks
+    python3 task.py add-subtask <parent-dir> <child-dir>     # Link child to parent
+    python3 task.py remove-subtask <parent-dir> <child-dir>  # Unlink child from parent
 """
 
 from __future__ import annotations
@@ -165,7 +165,7 @@ def _record_start_state(
             file=sys.stderr,
         )
         print(
-            f"Once you branch off, run: python {DIR_WORKFLOW}/scripts/task.py "
+            f"Once you branch off, run: python3 {DIR_WORKFLOW}/scripts/task.py "
             "set-branch <task> <feature-branch>",
             file=sys.stderr,
         )
@@ -212,8 +212,8 @@ def cmd_start(args: argparse.Namespace) -> int:
                 Colors.RED,
             ))
             print("Sub-agents (implement/check) would run with zero spec context.")
-            print(f"  Curate:  python .trellis/scripts/task.py add-context {task_input} implement <path> \"<why>\"")
-            print(f"  Verify:  python .trellis/scripts/task.py validate {task_input}")
+            print(f"  Curate:  python3 .trellis/scripts/task.py add-context {task_input} implement <path> \"<why>\"")
+            print(f"  Verify:  python3 .trellis/scripts/task.py validate {task_input}")
             print("  Intentionally empty? Re-run start with --allow-empty-context")
             return 1
 
@@ -365,7 +365,7 @@ def cmd_workflow(args: argparse.Namespace) -> int:
         return 1
     if not args.clear and not args.id:
         print(colored("Error: workflow id required (or --clear)", Colors.RED))
-        print("Usage: python task.py workflow <id> | --clear")
+        print("Usage: python3 task.py workflow <id> | --clear")
         return 1
 
     active = resolve_active_task(repo_root)
@@ -596,29 +596,29 @@ def show_usage() -> None:
     print("""Task Management Script
 
 Usage:
-  python task.py create <title> --description <desc>  Create new task directory (both required, non-empty)
-  python task.py create <title> --description <desc> --package <pkg>   Create task for a specific package
-  python task.py create <title> --description <desc> --parent <dir>    Create task as child of parent
-  python task.py create <title> --description <desc> --no-start        Create without making it active in this session
-  python task.py create <title> --description <desc> --workflow <id>   Create task pinned to a workflow variant
-  python task.py add-context <dir> <jsonl> <path> [reason]  Add entry to jsonl
-  python task.py validate <dir>                     Validate jsonl files
-  python task.py list-context <dir>                 List jsonl entries
-  python task.py start <dir>                        Set active task; records the checked-out branch when unset
-  python task.py current [--source]                 Show active task
-  python task.py finish                             Clear active task
-  python task.py workflow <id>                      Select workflow variant for active task
-  python task.py workflow --clear                   Clear selection (use default resolution)
-  python task.py set-branch <dir> <branch>          Set git branch
-  python task.py set-base-branch <dir> <branch>     Set PR target branch
-  python task.py set-scope <dir> <scope>            Set scope for PR title
-  python task.py set-meta <dir> <key> <value>       Set/overwrite a task metadata key
-  python task.py rename <dir> <new-slug>            Rename task, identity fields and references
-  python task.py archive <task-dir>                 Archive completed task
-  python task.py add-subtask <parent> <child>       Link child task to parent
-  python task.py remove-subtask <parent> <child>    Unlink child from parent
-  python task.py list [--mine] [--status <status>] [--json]  List tasks
-  python task.py list-archive [YYYY-MM]             List archived tasks
+  python3 task.py create <title> --description <desc>  Create new task directory (both required, non-empty)
+  python3 task.py create <title> --description <desc> --package <pkg>   Create task for a specific package
+  python3 task.py create <title> --description <desc> --parent <dir>    Create task as child of parent
+  python3 task.py create <title> --description <desc> --no-start        Create without making it active in this session
+  python3 task.py create <title> --description <desc> --workflow <id>   Create task pinned to a workflow variant
+  python3 task.py add-context <dir> <jsonl> <path> [reason]  Add entry to jsonl
+  python3 task.py validate <dir>                     Validate jsonl files
+  python3 task.py list-context <dir>                 List jsonl entries
+  python3 task.py start <dir>                        Set active task; records the checked-out branch when unset
+  python3 task.py current [--source]                 Show active task
+  python3 task.py finish                             Clear active task
+  python3 task.py workflow <id>                      Select workflow variant for active task
+  python3 task.py workflow --clear                   Clear selection (use default resolution)
+  python3 task.py set-branch <dir> <branch>          Set git branch
+  python3 task.py set-base-branch <dir> <branch>     Set PR target branch
+  python3 task.py set-scope <dir> <scope>            Set scope for PR title
+  python3 task.py set-meta <dir> <key> <value>       Set/overwrite a task metadata key
+  python3 task.py rename <dir> <new-slug>            Rename task, identity fields and references
+  python3 task.py archive <task-dir>                 Archive completed task
+  python3 task.py add-subtask <parent> <child>       Link child task to parent
+  python3 task.py remove-subtask <parent> <child>    Unlink child from parent
+  python3 task.py list [--mine] [--status <status>] [--json]  List tasks
+  python3 task.py list-archive [YYYY-MM]             List archived tasks
 
 Monorepo options:
   --package <pkg>      Package name (validated against config.yaml packages)
@@ -642,24 +642,24 @@ List options:
   --json               Output machine-readable JSON (also available on `current`)
 
 Examples:
-  python task.py create "Add login feature" --description "Email + password sign-in" --slug add-login
-  python task.py create "Add login feature" --description "Email + password sign-in" --slug add-login --package cli
-  python task.py create "Add login feature" --description "Email + password sign-in" --meta linear=ENG-123 --meta epic=auth
-  python task.py create "Child task" --description "Session cookie handling" --slug child --parent .trellis/tasks/01-21-parent
-  python task.py add-context <dir> implement .trellis/spec/cli/backend/auth.md "Auth guidelines"
-  python task.py set-branch <dir> task/add-login
-  python task.py start .trellis/tasks/01-21-add-login
-  python task.py current --source
-  python task.py finish
-  python task.py rename add-login add-sso --dry-run  # Preview the change set
-  python task.py rename add-login add-sso
-  python task.py archive add-login
-  python task.py archive add-login --skip-branch-validation  # Task never had a branch of its own
-  python task.py add-subtask parent-task child-task  # Link existing tasks
-  python task.py remove-subtask parent-task child-task
-  python task.py list                               # List all active tasks
-  python task.py list --mine                        # List my tasks only
-  python task.py list --mine --status in_progress   # List my in-progress tasks
+  python3 task.py create "Add login feature" --description "Email + password sign-in" --slug add-login
+  python3 task.py create "Add login feature" --description "Email + password sign-in" --slug add-login --package cli
+  python3 task.py create "Add login feature" --description "Email + password sign-in" --meta linear=ENG-123 --meta epic=auth
+  python3 task.py create "Child task" --description "Session cookie handling" --slug child --parent .trellis/tasks/01-21-parent
+  python3 task.py add-context <dir> implement .trellis/spec/cli/backend/auth.md "Auth guidelines"
+  python3 task.py set-branch <dir> task/add-login
+  python3 task.py start .trellis/tasks/01-21-add-login
+  python3 task.py current --source
+  python3 task.py finish
+  python3 task.py rename add-login add-sso --dry-run  # Preview the change set
+  python3 task.py rename add-login add-sso
+  python3 task.py archive add-login
+  python3 task.py archive add-login --skip-branch-validation  # Task never had a branch of its own
+  python3 task.py add-subtask parent-task child-task  # Link existing tasks
+  python3 task.py remove-subtask parent-task child-task
+  python3 task.py list                               # List all active tasks
+  python3 task.py list --mine                        # List my tasks only
+  python3 task.py list --mine --status in_progress   # List my in-progress tasks
 """)
 
 
@@ -690,7 +690,7 @@ def main() -> int:
         )
         print("See .trellis/workflow.md planning artifact guidance or run:", file=sys.stderr)
         print(
-            "  python ./.trellis/scripts/get_context.py --mode phase --step 1",
+            "  python3 ./.trellis/scripts/get_context.py --mode phase --step 1",
             file=sys.stderr,
         )
         print(

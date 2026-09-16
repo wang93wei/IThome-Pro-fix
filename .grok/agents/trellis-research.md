@@ -42,7 +42,7 @@ spawn_subagent(
 
 ### Step 1: Resolve Current Task
 
-Run `python ./.trellis/scripts/task.py current --source` to get the active task path. Prefer an `Active task: <path>` line in the dispatch prompt when present. If no active task is set, ask the user where to write output; do NOT guess.
+Run `python3 ./.trellis/scripts/task.py current --source` to get the active task path. Prefer an `Active task: <path>` line in the dispatch prompt when present. If no active task is set, ask the user where to write output; do NOT guess.
 
 Ensure `{TASK_DIR}/research/` exists before writing findings.
 

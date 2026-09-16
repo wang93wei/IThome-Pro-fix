@@ -278,7 +278,7 @@ function buildSessionContext(projectRoot: string, contextKey: string | null): st
    if (!existsSync(script)) return "";
 
    try {
-      const result = spawnSync("python", [script], {
+      const result = spawnSync("python3", [script], {
          cwd: projectRoot,
          encoding: "utf-8",
          env: contextKey
