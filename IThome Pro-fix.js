@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         IThome Pro fix
-// @version      4.9.0
+// @version      4.9.2
 // @description  优化ithome网页端浏览效果-修复版
 // @match        *://*.ithome.com/*
 // @run-at       document-start
@@ -34,6 +34,9 @@
 
     // 是否在页面内阅读新闻（true：浮层内嵌阅读，false：跳转/新标签页打开）
     inPageReader: true,
+
+    // 是否修复弹窗阅读器 iframe 内文章页的夜间模式（true：启用，false：禁用）
+    fixIframeNightMode: true,
     
     // 鼠标移动事件触发间隔（毫秒）
     MOUSEMOVE_INTERVAL: 100,
@@ -102,6 +105,55 @@
   if (window.location.href.startsWith("https://www.ithome.com/blog/")) {
     addHideStyle();
   }
+
+  /**
+   * 修复 iframe 内文章页的夜间模式
+   * 弹窗阅读器的 sandbox iframe 内，站点 ua.min.js 的防嵌套跳转
+   * （self!=top 时改写 top.location）会先抛 SecurityError，
+   * 紧随其后的 nightModeHelper 实例化不会执行，文章页的
+   * html.dark / body.night 夜间类永远加不上，导致正文始终浅色。
+   * 此处按站点相同的判定规则自行补齐夜间类，顶层页面不受影响。
+   */
+  const applyIframeNightMode = () => {
+    try {
+      if (!CONFIG.fixIframeNightMode) return;
+      // 仅在 iframe 内生效，顶层页面由站点自身的 nightModeHelper 处理
+      if (window.self === window.top) return;
+
+      // 与站点 NightModeHelper.isNight 相同的判定：
+      // cookie nightMode=1 深色 / nightMode=0 浅色，未设置则跟随系统
+      const isNight = () => {
+        const cookie = document.cookie;
+        if (cookie.indexOf("nightMode=1") >= 0) return true;
+        if (cookie.indexOf("nightMode=0") >= 0) return false;
+        return !!(window.matchMedia &&
+          window.matchMedia("(prefers-color-scheme: dark)").matches);
+      };
+
+      // html 的 dark 类在 document-start 即应用，避免正文先闪浅色
+      document.documentElement.classList[isNight() ? "add" : "remove"]("dark");
+
+      // 站点夜间样式同时依赖 body.night（深色背景挂在 body.night 上）。
+      // body 一插入 DOM 就立即补类，不能等 DOMContentLoaded——
+      // 首帧绘制早于它，否则正文会先闪一下浅色背景
+      const applyBodyNight = () => {
+        if (!document.body) return false;
+        document.body.classList[isNight() ? "add" : "remove"]("night");
+        return true;
+      };
+      if (!applyBodyNight()) {
+        const bodyObserver = new MutationObserver(() => {
+          if (applyBodyNight()) bodyObserver.disconnect();
+        });
+        bodyObserver.observe(document.documentElement, { childList: true });
+      }
+    } catch (error) {
+      console.error("Error in applyIframeNightMode:", error);
+    }
+  };
+
+  // iframe 内立即应用夜间类
+  applyIframeNightMode();
 
   /**
    * 保持页面活跃
