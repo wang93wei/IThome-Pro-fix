@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         IThome Pro fix
-// @version      4.9.2
+// @version      4.10.0
 // @description  优化ithome网页端浏览效果-修复版
 // @match        *://*.ithome.com/*
 // @run-at       document-start
@@ -693,28 +693,26 @@
    * 定义页内新闻阅读器浮层的各部分样式
    */
   const readerStyles = new Map([
-    // 全屏遮罩层
+    // 右侧停靠容器（左右布局：不遮挡左侧列表，列表保持可交互）
     ['overlay', {
       position: "fixed",
       top: "0",
-      left: "0",
-      width: "100vw",
+      right: "0",
+      width: "min(1100px, 60vw)",
       height: "100vh",
-      backgroundColor: "rgba(0, 0, 0, 0.5)",
       zIndex: "2147483647",
       display: "flex",
-      alignItems: "center",
-      justifyContent: "center"
+      transition: "transform 0.2s ease-out"
     }],
     // 阅读面板
     ['panel', {
-      width: "min(1100px, 94vw)",
-      height: "92vh",
+      width: "100%",
+      height: "100%",
       display: "flex",
       flexDirection: "column",
-      borderRadius: "12px",
+      borderRadius: "12px 0 0 12px",
       overflow: "hidden",
-      boxShadow: "0 12px 40px rgba(0, 0, 0, 0.4)"
+      boxShadow: "-12px 0 32px rgba(0, 0, 0, 0.35)"
     }],
     // 顶部栏
     ['header', {
@@ -755,8 +753,42 @@
     }]
   ]);
 
-  // 打开阅读器前的页面滚动位置
-  let readerScrollY = 0;
+  // 阅读器打开时被左移的列表容器
+  let readerShiftElement = null;
+
+  /**
+   * 左右布局位移
+   * 将居中的列表容器 #list 左移，使其在右侧面板留下的空间内保持居中；
+   * 剩余空间放不下列表时退化为贴近左侧对齐
+   */
+  const applyReaderShift = () => {
+    try {
+      const host = document.getElementById("list");
+      const overlay = document.getElementById("ithome-inpage-reader");
+      if (!host || !overlay) return;
+
+      // 先复位再测量，避免在已有位移上叠加
+      host.style.transform = "";
+      const rect = host.getBoundingClientRect();
+      const panelWidth = overlay.getBoundingClientRect().width;
+      const regionWidth = window.innerWidth - panelWidth;
+      const idealLeft = Math.max(12, (regionWidth - rect.width) / 2);
+      const shift = Math.max(0, Math.round(rect.left - idealLeft));
+
+      host.style.transition = "transform 0.2s ease-out";
+      host.style.transform = shift > 0 ? `translateX(-${shift}px)` : "";
+      readerShiftElement = shift > 0 ? host : null;
+    } catch (error) {
+      console.error("Error in applyReaderShift:", error);
+    }
+  };
+
+  /**
+   * 窗口尺寸变化时重算列表位移
+   */
+  const handleReaderResize = () => {
+    applyReaderShift();
+  };
 
   /**
    * 处理阅读器的ESC按键
@@ -770,19 +802,26 @@
 
   /**
    * 关闭页内阅读器
-   * 移除浮层、解绑键盘监听并恢复列表页滚动
+   * 列表容器恢复居中，面板向右滑出后移除，并解绑键盘与 resize 监听
    */
   const closeInPageReader = () => {
     try {
       const overlay = document.getElementById("ithome-inpage-reader");
       if (!overlay) return;
 
-      overlay.remove();
       document.removeEventListener("keydown", handleReaderKeydown);
+      window.removeEventListener("resize", handleReaderResize);
 
-      // 恢复页面滚动
-      document.body.style.overflow = "";
-      window.scrollTo(0, readerScrollY);
+      // 列表滑回居中位置
+      if (readerShiftElement) {
+        readerShiftElement.style.transform = "";
+        readerShiftElement = null;
+      }
+
+      // 去掉 id 防止滑出动画期间被复用，动画结束后移除节点
+      overlay.removeAttribute("id");
+      overlay.style.transform = "translateX(100%)";
+      setTimeout(() => overlay.remove(), 250);
     } catch (error) {
       console.error("Error in closeInPageReader:", error);
     }
@@ -790,7 +829,7 @@
 
   /**
    * 打开页内阅读器
-   * 以全屏浮层 + iframe 的方式在当前页面内阅读文章，浮层为单例可复用
+   * 左右布局：列表居左，阅读面板停靠窗口右侧，浮层为单例可复用
    * @param {string} url - 文章链接
    * @param {string} title - 文章标题
    */
@@ -808,20 +847,12 @@
         return;
       }
 
-      // 记录滚动位置并锁定背景页面滚动
-      readerScrollY = window.scrollY;
-      document.body.style.overflow = "hidden";
-
-      // 遮罩层
+      // 右侧停靠容器（不遮挡左侧列表，列表保持可点击、可滚动）
       const overlay = document.createElement("div");
       overlay.id = "ithome-inpage-reader";
       overlay.classList.add("ithome-inpage-reader");
       Object.assign(overlay.style, readerStyles.get('overlay'));
-
-      // 点击遮罩空白处关闭
-      overlay.addEventListener("click", (event) => {
-        if (event.target === overlay) closeInPageReader();
-      });
+      overlay.style.transform = "translateX(100%)";
 
       // 阅读面板（背景色随系统深浅色模式适配）
       const panel = document.createElement("div");
@@ -882,8 +913,21 @@
       overlay.appendChild(panel);
       document.body.appendChild(overlay);
 
+      // 列表容器左移，让其在面板左侧保持居中
+      applyReaderShift();
+
+      // 面板从右侧滑入
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          overlay.style.transform = "translateX(0)";
+        });
+      });
+
       // ESC关闭
       document.addEventListener("keydown", handleReaderKeydown);
+
+      // 窗口尺寸变化时重算列表位移
+      window.addEventListener("resize", handleReaderResize);
     } catch (error) {
       console.error("Error in openInPageReader:", error);
     }
